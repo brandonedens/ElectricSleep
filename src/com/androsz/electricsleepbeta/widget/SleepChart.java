@@ -163,8 +163,7 @@ public class SleepChart extends GraphicalView implements Parcelable {
 		this.calibrationLevel = calibrationLevel;
 	}
 
-	public void sync(final Cursor cursor) throws StreamCorruptedException,
-			IllegalArgumentException, IOException, ClassNotFoundException {
+	public void sync(final Cursor cursor){
 		sync(new SleepSession(cursor));
 	}
 

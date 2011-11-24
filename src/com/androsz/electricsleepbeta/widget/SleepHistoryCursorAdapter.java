@@ -28,21 +28,7 @@ public class SleepHistoryCursorAdapter extends ResourceCursorAdapter {
 		final ReviewSleepChart sleepChart = (ReviewSleepChart) view
 				.findViewById(R.id.sleep_history_list_item_sleepchartview);
 
-		try {
-			sleepChart.sync(cursor);
-		} catch (final StreamCorruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (final IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (final IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (final ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		sleepChart.sync(cursor);
 		sleepChart.setMinimumHeight(parent.getHeight() / 2);
 	}
 

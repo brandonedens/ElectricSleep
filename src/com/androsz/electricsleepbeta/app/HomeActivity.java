@@ -1,50 +1,37 @@
 package com.androsz.electricsleepbeta.app;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.database.CursorIndexOutOfBoundsException;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBar;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
-import android.support.v4.view.MenuItem;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.text.format.Time;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.ViewSwitcher;
 
 import com.androsz.electricsleepbeta.R;
-import com.androsz.electricsleepbeta.alarmclock.AlarmClock;
-import com.androsz.electricsleepbeta.content.StartSleepReceiver;
-import com.androsz.electricsleepbeta.db.SleepSession;
-import com.androsz.electricsleepbeta.db.SleepSessions;
-import com.androsz.electricsleepbeta.util.MathUtils;
-import com.androsz.electricsleepbeta.widget.SleepChart;
+import com.androsz.electricsleepbeta.widget.calendar.MonthView;
+import com.androsz.electricsleepbeta.widget.calendar.Utils;
+import com.viewpagerindicator.TitleProvider;
 
-/**
- * Front-door {@link Activity} that displays high-level features the application
- * offers to users.
- */
-public class HomeActivity extends HostActivity implements LoaderManager.LoaderCallbacks<Cursor> {
-
-	private SleepChart sleepChart;
+public class HomeActivity extends HostActivity {
 
 	@Override
 	protected int getContentAreaLayoutId() {
-		return R.layout.activity_home;
-	}
-
-	public void onAlarmsClick(final View v) {
-		startActivity(new Intent(this, AlarmClock.class));
+		// TODO Auto-generated method stub
+		return R.layout.activity_newhome;
 	}
 
 	@Override
-	protected void onCreate(final Bundle savedInstanceState) {
+	public void onCreate(final Bundle savedInstanceState) {
 
 		super.onCreate(savedInstanceState);
 
@@ -70,131 +57,77 @@ public class HomeActivity extends HostActivity implements LoaderManager.LoaderCa
 				return null;
 			}
 		}.execute();
-
-		sleepChart = (SleepChart) findViewById(R.id.home_sleep_chart);
-
-		getSupportLoaderManager().initLoader(0, null, this);
+		
+		((ViewPager)findViewById(R.id.viewpager)).setAdapter(new HomePagerAdapter(getSupportFragmentManager()));
 	}
 
-	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-		return new CursorLoader(this, SleepSessions.MainTable.CONTENT_URI,
-				SleepSessions.MainTable.ALL_COLUMNS_PROJECTION, null, null, null);
-	}
+	private class HomePagerAdapter extends FragmentPagerAdapter implements TitleProvider {
 
-	/*
-	 * Used for overriding default HostActivity behavior..
-	 * 
-	 * @Override public boolean onCreateOptionsMenu(Menu menu) { final boolean
-	 * result = super.onCreateOptionsMenu(menu);
-	 * menu.findItem(R.id.menu_item_donate).setShowAsAction(
-	 * MenuItem.SHOW_AS_ACTION_WITH_TEXT | MenuItem.SHOW_AS_ACTION_IF_ROOM);
-	 * menu.findItem(R.id.menu_item_settings).setShowAsAction(MenuItem.
-	 * SHOW_AS_ACTION_IF_ROOM); return result; }
-	 */
-
-	@Override
-	public boolean onOptionsItemSelected(final MenuItem item) {
-		//cancel home as up
-		if (item.getItemId() == android.R.id.home) {
-			return true;
+		public HomePagerAdapter(FragmentManager fm) {
+			super(fm);
 		}
 		
-		return super.onOptionsItemSelected(item);
-	}
+		private String[] titles = new String[] { "", "", "" };
 
-	public void onHistoryClick(final View v) {
-		startActivity(new Intent(this, HistoryMonthActivity.class));
-	}
+		public String[] getTitles() {
+			return titles;
+		}
 
-	@Override
-	public void onLoaderReset(Loader<Cursor> arg0) {
+		public void setTitles(String[] titles) {
+			this.titles = titles.clone();
+		}
 
-	}
+		@Override
+		public String getTitle(int position) {
+			// TODO Auto-generated method stub
+			return null;
+		}
 
-	@Override
-	public void onLoadFinished(Loader<Cursor> arg0, Cursor cursor) {
-		final TextView lastSleepTitleText = (TextView) findViewById(R.id.home_last_sleep_title_text);
-		final TextView reviewTitleText = (TextView) findViewById(R.id.home_review_title_text);
-		final ViewGroup container = (ViewGroup) findViewById(R.id.home_stats_container);
-		if (cursor == null || cursor.getCount() == 0) {
-			container.setVisibility(View.GONE);
-			reviewTitleText.setText(getString(R.string.home_review_title_text_empty));
-			lastSleepTitleText.setText(getString(R.string.home_last_sleep_title_text_empty));
-		} else {
-
-			final TextView avgScoreText = (TextView) findViewById(R.id.value_score_text);
-			final TextView avgDurationText = (TextView) findViewById(R.id.value_duration_text);
-			final TextView avgSpikesText = (TextView) findViewById(R.id.value_spikes_text);
-			final TextView avgFellAsleepText = (TextView) findViewById(R.id.value_fell_asleep_text);
-			cursor.moveToLast();
-
-			try {
-				sleepChart.sync(cursor);
-			} catch (final Exception e) {
+		@Override
+		public Fragment getItem(int position) {
+			switch (position) {
+			case 0:
+				return new HomeFragment();
+			default:
+				return null;
 			}
-			sleepChart.setMinimumHeight(MathUtils.getAbsoluteScreenHeightPx(HomeActivity.this) / 2);
-			lastSleepTitleText.setText(getString(R.string.home_last_sleep_title_text));
+		}
 
-			cursor.moveToFirst();
-			int avgSleepScore = 0;
-			long avgDuration = 0;
-			int avgSpikes = 0;
-			long avgFellAsleep = 0;
-			int count = 0;
-			do {
-				count++;
-				SleepSession sleepRecord = null;
-				try {
-					sleepRecord = new SleepSession(cursor);
-				} catch (final CursorIndexOutOfBoundsException cioobe) {
-					// there are no records!
-					return;
-				}
-				avgSleepScore += sleepRecord.getSleepScore();
-				avgDuration += sleepRecord.duration;
-				avgSpikes += sleepRecord.spikes;
-				avgFellAsleep += sleepRecord.getTimeToFallAsleep();
-
-			} while (cursor.moveToNext());
-
-			final float invCount = 1.0f / count;
-			avgSleepScore *= invCount;
-			avgDuration *= invCount;
-			avgSpikes *= invCount;
-			avgFellAsleep *= invCount;
-
-			avgScoreText.setText(avgSleepScore + "%");
-			avgDurationText.setText(SleepSession.getTimespanText(avgDuration, getResources()));
-			avgSpikesText.setText(avgSpikes + "");
-			avgFellAsleepText.setText(SleepSession.getTimespanText(avgFellAsleep, getResources()));
-
-			reviewTitleText.setText(getString(R.string.home_review_title_text));
-			container.setVisibility(View.VISIBLE);
-			sleepChart.setVisibility(View.VISIBLE);
+		@Override
+		public int getCount() {
+			return 1;
 		}
 	}
 
-	@Override
-	protected void onPause() {
-		super.onPause();
+	private static class ViewpagerAdapter extends FragmentPagerAdapter {
+		protected static final String[] HEADERS = new String[] { "This", "Is", "A", "Test", };
 
-		// if (loadLastSleepChartTask != null) {
-		// loadLastSleepChartTask.cancel(true);
-		// }
+		private int mCount = HEADERS.length;
+
+		public ViewpagerAdapter(FragmentManager fm) {
+			super(fm);
+		}
+
+		@Override
+		public Fragment getItem(int position) {
+			Fragment fragment = null;
+			switch (position) {
+
+			}
+			return fragment;
+		}
+
+		@Override
+		public int getCount() {
+			return mCount;
+		}
+
+		public void setCount(int count) {
+			if (count > 0 && count <= 10) {
+				mCount = count;
+				notifyDataSetChanged();
+			}
+		}
 	}
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		// if (loadLastSleepChartTask != null) {
-		// loadLastSleepChartTask.cancel(true);
-		// }
-		// loadLastSleepChartTask = new LoadLastSleepChartTask();
-		// loadLastSleepChartTask.execute(getString(R.string.to));
-	}
-
-	public void onSleepClick(final View v) throws Exception {
-		sendBroadcast(new Intent(StartSleepReceiver.START_SLEEP));
-	}
 }

@@ -69,9 +69,9 @@ public class HistoryMonthActivity extends HostActivity implements
 				String[] newTitles = new String[3];
 
 				if (focusedPage == 0) {
-					
+
 					final Time oldTopTime = new Time(leftMonth.getTime());
-					
+
 					final Time time = new Time(oldTopTime);
 					time.month--;
 					time.normalize(true);
@@ -81,9 +81,9 @@ public class HistoryMonthActivity extends HostActivity implements
 					centerMonth.setTime(oldTopTime);
 					rightMonth.setTime(oldCenterTime);
 				} else if (focusedPage == 2) {
-					
+
 					final Time oldBottomTime = new Time(rightMonth.getTime());
-					
+
 					final Time time = new Time(oldBottomTime);
 					time.month++;
 					time.normalize(true);
@@ -140,7 +140,7 @@ public class HistoryMonthActivity extends HostActivity implements
 
 		@Override
 		public void destroyItem(View container, int position, Object object) {
-			//simply reuse items...
+			// simply reuse items...
 			// ((ViewPager) container).removeViewAt(position);
 		}
 
@@ -308,7 +308,7 @@ public class HistoryMonthActivity extends HostActivity implements
 		getSupportLoaderManager().initLoader(0, null, this);
 
 		ActionBar bar = getSupportActionBar();
-		//bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+		// bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
 
 		final Time now = new Time();
 		now.setToNow();
