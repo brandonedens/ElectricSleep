@@ -13,7 +13,7 @@ import com.androsz.electricsleepbeta.widget.calendar.MonthView;
 public class MonthFragment extends Fragment {
 	final MonthView mv;
 
-	public MonthFragment(HistoryMonthActivity activity, Time time) {
+	public MonthFragment(HistoryMonthFragment activity, Time time) {
 		super();
 		try {
 			mv = new MonthView(activity);

@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.support.v4.app.ActionBar;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.app.SupportActivity;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.Menu;
@@ -23,7 +24,9 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.text.format.DateUtils;
 import android.text.format.Time;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
@@ -34,7 +37,7 @@ import com.androsz.electricsleepbeta.widget.calendar.Utils;
 import com.viewpagerindicator.TitlePageIndicator;
 import com.viewpagerindicator.TitleProvider;
 
-public class HistoryMonthActivity extends HostActivity implements
+public class HistoryMonthFragment extends HostFragment implements
 		LoaderManager.LoaderCallbacks<Cursor> {
 
 	private final class IndicatorPageChangeListener implements OnPageChangeListener {
@@ -94,10 +97,10 @@ public class HistoryMonthActivity extends HostActivity implements
 				}
 
 				newTitles[0] = Utils
-						.formatMonthYear(HistoryMonthActivity.this, leftMonth.getTime());
-				newTitles[1] = Utils.formatMonthYear(HistoryMonthActivity.this,
+						.formatMonthYear(getActivity(), leftMonth.getTime());
+				newTitles[1] = Utils.formatMonthYear(getActivity(),
 						centerMonth.getTime());
-				newTitles[2] = Utils.formatMonthYear(HistoryMonthActivity.this,
+				newTitles[2] = Utils.formatMonthYear(getActivity(),
 						rightMonth.getTime());
 
 				monthAdapter.setTitles(newTitles);
@@ -128,7 +131,7 @@ public class HistoryMonthActivity extends HostActivity implements
 		}
 
 		public MonthView addMonthViewAt(ViewPager container, int position, Time time) {
-			final MonthView mv = new MonthView(HistoryMonthActivity.this);
+			final MonthView mv = new MonthView(HistoryMonthFragment.this);
 			mv.setLayoutParams(new ViewSwitcher.LayoutParams(
 					android.view.ViewGroup.LayoutParams.MATCH_PARENT,
 					android.view.ViewGroup.LayoutParams.MATCH_PARENT));
@@ -176,7 +179,7 @@ public class HistoryMonthActivity extends HostActivity implements
 
 				MonthView mv = addMonthViewAt((ViewPager) container, position, time);
 
-				titles[position] = Utils.formatMonthYear(HistoryMonthActivity.this, mv.getTime());
+				titles[position] = Utils.formatMonthYear(getActivity(), mv.getTime());
 
 				return mv;
 			}
@@ -210,8 +213,7 @@ public class HistoryMonthActivity extends HostActivity implements
 
 		@Override
 		public void onChange(boolean selfChange) {
-
-			getSupportLoaderManager().getLoader(0).forceLoad();
+			((SupportActivity)getActivity()).getSupportLoaderManager().getLoader(0).forceLoad();
 			super.onChange(selfChange);
 		}
 	}
@@ -245,7 +247,7 @@ public class HistoryMonthActivity extends HostActivity implements
 	};
 
 	void eventsChanged() {
-		runOnUiThread(new Runnable() {
+		getActivity().runOnUiThread(new Runnable() {
 
 			@Override
 			public void run() {
@@ -302,14 +304,24 @@ public class HistoryMonthActivity extends HostActivity implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		this.setHasOptionsMenu(true);
 		sessionsObserver = new SessionsContentObserver();
-		getContentResolver().registerContentObserver(SleepSessions.MainTable.CONTENT_URI, true,
+		getActivity().getContentResolver().registerContentObserver(SleepSessions.MainTable.CONTENT_URI, true,
 				sessionsObserver);
-		getSupportLoaderManager().initLoader(0, null, this);
+		SupportActivity sa = (SupportActivity) getActivity();
+		sa.getSupportLoaderManager().initLoader(0, null, this);
 
-		ActionBar bar = getSupportActionBar();
+		ActionBar bar = sa.getSupportActionBar();
 		// bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
 
+	}
+	
+	
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		final View view = super.onCreateView(inflater, container, savedInstanceState);
+		
 		final Time now = new Time();
 		now.setToNow();
 
@@ -322,7 +334,7 @@ public class HistoryMonthActivity extends HostActivity implements
 		for (int day = 0; day < 7; day++) {
 			final String dayString = DateUtils.getDayOfWeekString(
 					(DAY_OF_WEEK_KINDS[day] + diff) % 7 + 1, DateUtils.LENGTH_MEDIUM);
-			final TextView label = (TextView) findViewById(DAY_OF_WEEK_LABEL_IDS[day]);
+			final TextView label = (TextView) view.findViewById(DAY_OF_WEEK_LABEL_IDS[day]);
 			label.setText(dayString);
 			if (Utils.isSunday(day, startDay) || Utils.isSaturday(day, startDay)) {
 				label.setTextColor(weekendColor);
@@ -330,31 +342,34 @@ public class HistoryMonthActivity extends HostActivity implements
 		}
 
 		monthAdapter = new MonthPagerAdapter();
-		monthPager = (ViewPager) findViewById(R.id.monthpager);
+		monthPager = (ViewPager) view.findViewById(R.id.monthpager);
 		monthPager.setAdapter(monthAdapter);
 
-		final TitlePageIndicator indicator = (TitlePageIndicator) findViewById(R.id.indicator);
+		final TitlePageIndicator indicator = (TitlePageIndicator) view.findViewById(R.id.indicator);
 		indicator.setFooterColor(getResources().getColor(R.color.primary1));
 		indicator.setViewPager(monthPager, 1);
 		indicator.setOnPageChangeListener(new IndicatorPageChangeListener(indicator));
+		
+		return view;
+		
 	}
 
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-		return new CursorLoader(this, SleepSessions.MainTable.CONTENT_URI,
+		return new CursorLoader(getActivity(), SleepSessions.MainTable.CONTENT_URI,
 				SleepSessions.MainTable.ALL_COLUMNS_PROJECTION, null, null, null);
 	}
-
+	
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu_multiple_history, menu);
-		return super.onCreateOptionsMenu(menu);
+	public void onCreateOptionsMenu(Menu menu, android.view.MenuInflater inflater) {
+		inflater.inflate(R.menu.menu_multiple_history, menu);
+		super.onCreateOptionsMenu(menu, inflater);
 	}
 
 	@Override
-	protected void onDestroy() {
+	public void onDestroy() {
 		super.onDestroy();
-		getContentResolver().unregisterContentObserver(sessionsObserver);
+		getActivity().getContentResolver().unregisterContentObserver(sessionsObserver);
 	}
 
 	@Override
@@ -369,7 +384,7 @@ public class HistoryMonthActivity extends HostActivity implements
 			@Override
 			public void run() {
 				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-				mSessions = SleepSessions.getStartAndEndTimesFromCursor(HistoryMonthActivity.this,
+				mSessions = SleepSessions.getStartAndEndTimesFromCursor(getActivity(),
 						data);
 				eventsChanged();
 				// TODO: notify MonthViews that mEvents have change in a
@@ -392,20 +407,20 @@ public class HistoryMonthActivity extends HostActivity implements
 	}
 
 	@Override
-	protected void onPause() {
+	public void onPause() {
 		super.onPause();
-		unregisterReceiver(mIntentReceiver);
+		getActivity().unregisterReceiver(mIntentReceiver);
 	}
 
 	@Override
-	protected void onResume() {
+	public void onResume() {
 		super.onResume();
 		final IntentFilter filter = new IntentFilter();
 
 		filter.addAction(Intent.ACTION_TIME_CHANGED);
 		filter.addAction(Intent.ACTION_DATE_CHANGED);
 		filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
-		registerReceiver(mIntentReceiver, filter);
+		getActivity().registerReceiver(mIntentReceiver, filter);
 
 	}
 }

@@ -5,21 +5,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.text.format.Time;
-import android.view.View;
-import android.widget.ViewSwitcher;
 
 import com.androsz.electricsleepbeta.R;
-import com.androsz.electricsleepbeta.widget.calendar.MonthView;
-import com.androsz.electricsleepbeta.widget.calendar.Utils;
+import com.androsz.electricsleepbeta.alarmclock.AlarmClock;
+import com.viewpagerindicator.TitlePageIndicator;
 import com.viewpagerindicator.TitleProvider;
 
 public class HomeActivity extends HostActivity {
@@ -57,8 +52,12 @@ public class HomeActivity extends HostActivity {
 				return null;
 			}
 		}.execute();
-		
-		((ViewPager)findViewById(R.id.viewpager)).setAdapter(new HomePagerAdapter(getSupportFragmentManager()));
+		ViewPager viewPager = ((ViewPager)findViewById(R.id.viewpager));
+		viewPager.setAdapter(new HomePagerAdapter(getSupportFragmentManager()));
+
+		final TitlePageIndicator indicator = (TitlePageIndicator) findViewById(R.id.indicator);
+		indicator.setFooterColor(getResources().getColor(R.color.primary1));
+		indicator.setViewPager(viewPager, 1);
 	}
 
 	private class HomePagerAdapter extends FragmentPagerAdapter implements TitleProvider {
@@ -67,27 +66,23 @@ public class HomeActivity extends HostActivity {
 			super(fm);
 		}
 		
-		private String[] titles = new String[] { "", "", "" };
-
-		public String[] getTitles() {
-			return titles;
-		}
-
-		public void setTitles(String[] titles) {
-			this.titles = titles.clone();
-		}
+		private int[] titles = new int[] { R.string.app_name, R.string.title_history, R.string.pref_alarms};
 
 		@Override
 		public String getTitle(int position) {
 			// TODO Auto-generated method stub
-			return null;
+			return getString(titles[position]);
 		}
 
 		@Override
 		public Fragment getItem(int position) {
 			switch (position) {
 			case 0:
+				return new HistoryMonthFragment();
+			case 1:
 				return new HomeFragment();
+			case 2:
+				return new AlarmClock();
 			default:
 				return null;
 			}
@@ -95,39 +90,7 @@ public class HomeActivity extends HostActivity {
 
 		@Override
 		public int getCount() {
-			return 1;
+			return titles.length;
 		}
 	}
-
-	private static class ViewpagerAdapter extends FragmentPagerAdapter {
-		protected static final String[] HEADERS = new String[] { "This", "Is", "A", "Test", };
-
-		private int mCount = HEADERS.length;
-
-		public ViewpagerAdapter(FragmentManager fm) {
-			super(fm);
-		}
-
-		@Override
-		public Fragment getItem(int position) {
-			Fragment fragment = null;
-			switch (position) {
-
-			}
-			return fragment;
-		}
-
-		@Override
-		public int getCount() {
-			return mCount;
-		}
-
-		public void setCount(int count) {
-			if (count > 0 && count <= 10) {
-				mCount = count;
-				notifyDataSetChanged();
-			}
-		}
-	}
-
 }

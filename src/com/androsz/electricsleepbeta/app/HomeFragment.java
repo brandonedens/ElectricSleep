@@ -37,7 +37,7 @@ public class HomeFragment extends HostFragment implements LoaderManager.LoaderCa
 
 	@Override
 	protected int getContentAreaLayoutId() {
-		return R.layout.activity_home;
+		return R.layout.fragment_home;
 	}
 
 	public void onAlarmsClick(final View v) {

@@ -138,7 +138,7 @@
             android:theme="@android:style/Theme.Wallpaper.NoTitleBar" />
         <activity
             android:label="@string/title_history"
-            android:name="com.androsz.electricsleepbeta.app.HistoryMonthActivity" />
+            android:name=".app.HistoryMonthFragment" />
 
         <receiver android:name="com.androsz.electricsleepbeta.alarmclock.AlarmReceiver" >
             <intent-filter >

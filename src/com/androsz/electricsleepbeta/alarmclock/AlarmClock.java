@@ -29,10 +29,10 @@ import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.view.Menu;
+import android.support.v4.view.MenuItem;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -51,7 +51,7 @@ import com.androsz.electricsleepbeta.app.SettingsActivity;
 /**
  * AlarmClock application.
  */
-public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity implements
+public class AlarmClock extends com.androsz.electricsleepbeta.app.HostFragment implements
 		OnItemClickListener {
 
 	private class AlarmTimeAdapter extends CursorAdapter {
@@ -95,7 +95,7 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 
 			// Set the repeat text or leave it blank if it does not repeat.
 			final TextView daysOfWeekView = (TextView) digitalClock.findViewById(R.id.daysOfWeek);
-			final String daysOfWeekStr = alarm.daysOfWeek.toString(AlarmClock.this, false);
+			final String daysOfWeekStr = alarm.daysOfWeek.toString(getActivity(), false);
 			if (daysOfWeekStr != null && daysOfWeekStr.length() != 0) {
 				daysOfWeekView.setText(daysOfWeekStr);
 				daysOfWeekView.setVisibility(View.VISIBLE);
@@ -129,6 +129,8 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 	 */
 	static final boolean DEBUG = false;
 
+	private static final int UNIQUE_FRAGMENT_GROUP_ID = -1;
+
 	private ListView mAlarmsList;
 
 	private Cursor mCursor;
@@ -136,7 +138,7 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 	private SharedPreferences mPrefs;
 
 	private void addNewAlarm() {
-		startActivity(new Intent(this, SetAlarm.class));
+		startActivity(new Intent(getActivity(), SetAlarm.class));
 	}
 
 	@Override
@@ -146,51 +148,57 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 
 	@Override
 	public boolean onContextItemSelected(final MenuItem item) {
-		final AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-		final int id = (int) info.id;
-		switch (item.getItemId()) {
-		case R.id.delete_alarm:
-			// Confirm that the alarm will be deleted.
-			new AlertDialog.Builder(this).setTitle(getString(R.string.delete_alarm))
-					.setMessage(getString(R.string.delete_alarm_confirm))
-					.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(final DialogInterface d, final int w) {
-							Alarms.deleteAlarm(AlarmClock.this, id);
-						}
-					}).setNegativeButton(android.R.string.cancel, null).show();
-			return true;
 
-		case R.id.enable_alarm:
-			final Cursor c = (Cursor) mAlarmsList.getAdapter().getItem(info.position);
-			final Alarm alarm = new Alarm(c);
-			Alarms.enableAlarm(this, alarm.id, !alarm.enabled);
-			if (!alarm.enabled) {
-				SetAlarm.popAlarmSetToast(this, alarm.hour, alarm.minutes, alarm.daysOfWeek);
+		if (item.getGroupId() == UNIQUE_FRAGMENT_GROUP_ID) {
+			final AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+			final int id = (int) info.id;
+			switch (item.getItemId()) {
+			case R.id.delete_alarm:
+				// Confirm that the alarm will be deleted.
+				new AlertDialog.Builder(getActivity())
+						.setTitle(getString(R.string.delete_alarm))
+						.setMessage(getString(R.string.delete_alarm_confirm))
+						.setPositiveButton(android.R.string.ok,
+								new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(final DialogInterface d, final int w) {
+										Alarms.deleteAlarm(getActivity(), id);
+									}
+								}).setNegativeButton(android.R.string.cancel, null).show();
+				return true;
+
+			case R.id.enable_alarm:
+				final Cursor c = (Cursor) mAlarmsList.getAdapter().getItem(info.position);
+				final Alarm alarm = new Alarm(c);
+				Alarms.enableAlarm(getActivity(), alarm.id, !alarm.enabled);
+				if (!alarm.enabled) {
+					SetAlarm.popAlarmSetToast(getActivity(), alarm.hour, alarm.minutes, alarm.daysOfWeek);
+				}
+				return true;
+
+			case R.id.edit_alarm:
+				final Intent intent = new Intent(getActivity(), SetAlarm.class);
+				intent.putExtra(Alarms.ALARM_ID, id);
+				startActivity(intent);
+				return true;
+
+			default:
+				break;
 			}
-			return true;
-
-		case R.id.edit_alarm:
-			final Intent intent = new Intent(this, SetAlarm.class);
-			intent.putExtra(Alarms.ALARM_ID, id);
-			startActivity(intent);
-			return true;
-
-		default:
-			break;
 		}
 		return super.onContextItemSelected(item);
 	};
 
 	@Override
-	protected void onCreate(final Bundle icicle) {
+	public void onCreate(final Bundle icicle) {
 		super.onCreate(icicle);
+		this.setHasOptionsMenu(true);
 
 		new AsyncTask<Void, Void, Void>() {
 			@Override
 			protected Void doInBackground(Void... params) {
-				mPrefs = getSharedPreferences(SettingsActivity.PREFERENCES, 0);
-				mCursor = Alarms.getAlarmsCursor(getContentResolver());
+				mPrefs = getActivity().getSharedPreferences(SettingsActivity.PREFERENCES, 0);
+				mCursor = Alarms.getAlarmsCursor(getActivity().getContentResolver());
 				mCursor.deactivate();
 				return null;
 			}
@@ -203,7 +211,7 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 
 			@Override
 			protected void onPreExecute() {
-				mFactory = LayoutInflater.from(AlarmClock.this);
+				mFactory = LayoutInflater.from(getActivity());
 				super.onPreExecute();
 			}
 		}.execute();
@@ -214,11 +222,11 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 			final ContextMenuInfo menuInfo) {
 		// Inflate the menu from xml.
 		// super.getMenuInflater().inflate(R.menu.context_menu, (Menu)menu);
-		menu.add(android.view.Menu.NONE, R.id.enable_alarm, android.view.Menu.NONE,
+		menu.add(UNIQUE_FRAGMENT_GROUP_ID, R.id.enable_alarm, android.view.Menu.NONE,
 				R.string.enable_alarm);
-		menu.add(android.view.Menu.NONE, R.id.edit_alarm, android.view.Menu.NONE,
+		menu.add(UNIQUE_FRAGMENT_GROUP_ID, R.id.edit_alarm, android.view.Menu.NONE,
 				R.string.menu_edit_alarm);
-		menu.add(android.view.Menu.NONE, R.id.delete_alarm, android.view.Menu.NONE,
+		menu.add(UNIQUE_FRAGMENT_GROUP_ID, R.id.delete_alarm, android.view.Menu.NONE,
 				R.string.delete_alarm);
 		// Use the current item to create a custom view for the header.
 		final AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
@@ -229,7 +237,7 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 		final Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.HOUR_OF_DAY, alarm.hour);
 		cal.set(Calendar.MINUTE, alarm.minutes);
-		final String time = Alarms.formatTime(this, cal);
+		final String time = Alarms.formatTime(getActivity(), cal);
 
 		// Inflate the custom view and set each TextView's text.
 		final View v = mFactory.inflate(R.layout.context_menu_header, null);
@@ -247,13 +255,13 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu_alarm_clock, menu);
-		return super.onCreateOptionsMenu(menu);
+	public void onCreateOptionsMenu(Menu menu, android.view.MenuInflater inflater) {
+		inflater.inflate(R.menu.menu_alarm_clock, menu);
+		super.onCreateOptionsMenu(menu, inflater);
 	}
 
 	@Override
-	protected void onDestroy() {
+	public void onDestroy() {
 		super.onDestroy();
 		ToastMaster.cancelToast();
 		mCursor.close();
@@ -261,7 +269,7 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 
 	@Override
 	public void onItemClick(final AdapterView parent, final View v, final int pos, final long id) {
-		final Intent intent = new Intent(this, SetAlarm.class);
+		final Intent intent = new Intent(getActivity(), SetAlarm.class);
 		intent.putExtra(Alarms.ALARM_ID, (int) id);
 		startActivity(intent);
 	}
@@ -279,23 +287,23 @@ public class AlarmClock extends com.androsz.electricsleepbeta.app.HostActivity i
 	private void updateIndicatorAndAlarm(final boolean enabled, final ImageView bar,
 			final Alarm alarm) {
 		bar.setImageResource(enabled ? R.drawable.ic_indicator_on : R.drawable.ic_indicator_off);
-		Alarms.enableAlarm(this, alarm.id, enabled);
+		Alarms.enableAlarm(getActivity(), alarm.id, enabled);
 		if (enabled) {
-			SetAlarm.popAlarmSetToast(this, alarm.hour, alarm.minutes, alarm.daysOfWeek);
+			SetAlarm.popAlarmSetToast(getActivity(), alarm.hour, alarm.minutes, alarm.daysOfWeek);
 		}
 	}
 
 	private void updateLayout() {
-		mAlarmsList = (ListView) findViewById(R.id.alarms_list);
+		mAlarmsList = (ListView) getActivity().findViewById(R.id.alarms_list);
 		mCursor.requery();
-		final AlarmTimeAdapter adapter = new AlarmTimeAdapter(this, mCursor);
+		final AlarmTimeAdapter adapter = new AlarmTimeAdapter(getActivity(), mCursor);
 		mAlarmsList.setAdapter(adapter);
 		mAlarmsList.setVerticalScrollBarEnabled(true);
 		mAlarmsList.setOnItemClickListener(this);
 		mAlarmsList.setOnCreateContextMenuListener(this);
 		mAlarmsList.setBackgroundColor(Color.BLACK);
-		//mAlarmsList.setCacheColorHint(0);
-		//mAlarmsList.setBackgroundDrawable(getResources().getDrawable(
-		//		R.drawable.gradient_background_vert));
+		// mAlarmsList.setCacheColorHint(0);
+		// mAlarmsList.setBackgroundDrawable(getResources().getDrawable(
+		// R.drawable.gradient_background_vert));
 	}
 }
