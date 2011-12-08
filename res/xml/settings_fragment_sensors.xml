@@ -9,7 +9,7 @@
             android:title="@string/title_pref_calibration" >
         </Preference>
 
-        <com.androsz.electricsleepbeta.preference.SeekBarPreference
+        <com.androsz.electricsleep.preference.SeekBarPreference
             android:defaultValue="0.33"
             android:enabled="true"
             android:key="@string/pref_alarm_trigger_sensitivity"

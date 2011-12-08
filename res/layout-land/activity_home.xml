@@ -192,7 +192,7 @@
                     android:textAppearance="@style/TextHeader" >
                 </TextView>
 
-                <com.androsz.electricsleepbeta.widget.ReviewSleepChart
+                <com.androsz.electricsleep.widget.ReviewSleepChart
                     android:id="@+id/home_sleep_chart"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"

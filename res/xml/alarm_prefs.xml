@@ -22,12 +22,12 @@
         android:persistent="false"
         android:title="@string/time" />
 
-    <com.androsz.electricsleepbeta.alarmclock.RepeatPreference
+    <com.androsz.electricsleep.alarmclock.RepeatPreference
         android:key="setRepeat"
         android:persistent="false"
         android:title="@string/alarm_repeat" />
 
-    <com.androsz.electricsleepbeta.alarmclock.AlarmPreference
+    <com.androsz.electricsleep.alarmclock.AlarmPreference
         android:key="alarm"
         android:persistent="false"
         android:ringtoneType="all"

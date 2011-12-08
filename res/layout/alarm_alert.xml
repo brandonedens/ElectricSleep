@@ -40,7 +40,7 @@
             android:scaleType="fitXY"
             android:src="@drawable/dialog_divider_horizontal_light" />
 
-        <com.androsz.electricsleepbeta.alarmclock.DigitalClock
+        <com.androsz.electricsleep.alarmclock.DigitalClock
             style="@style/clock"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -63,7 +63,7 @@
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textStyle="bold" />
-        </com.androsz.electricsleepbeta.alarmclock.DigitalClock>
+        </com.androsz.electricsleep.alarmclock.DigitalClock>
 
         <LinearLayout
             android:layout_width="match_parent"
